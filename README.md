@@ -2,6 +2,8 @@
 
 《计算机系统概论》（Computer Systems: A Programmer's Perspective）学习资料整理。
 
+其中所有 Markdown 文件由 Obsidian 编写，导入 Obsidian 以获得最佳阅读效果。
+
 ## 目录结构
 
 ```
