@@ -261,17 +261,21 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-    int h16 = !!(x >> 16) << 4;
+    int h0, h1, h2, h4, h8, h16;
+    int s = x >> 31;
+    x = s ^ x;
+    h16 = !!(x >> 16) << 4;
     x >>= h16;
-    int h8 = !!(x >> 8) << 3;
+    h8 = !!(x >> 8) << 3;
     x >>= h8;
-    int h4 = !!(x >> 4) << 2;
+    h4 = !!(x >> 4) << 2;
     x >>= h4;
-    int h2 = !!(x >> 2) << 1;
+    h2 = !!(x >> 2) << 1;
     x >>= h2;
-    int h1 = !!(x >> 1) << 1;
+    h1 = !!(x >> 1);
     x >>= h1;
-    return h1 + h2 + h4 + h8 + h16;
+    h0 = x;
+    return 1 + h0 + h1 + h2 + h4 + h8 + h16;
 }
 //float
 /* 
@@ -286,7 +290,23 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+    unsigned s = uf & 0x80000000;
+    uf &= 0x7FFFFFFF;
+
+    if (uf >= 0x7F800000) {
+        return s | uf;
+    }
+
+    if (uf < 0x00800000) {
+        uf <<= 1;
+    } else {
+        uf += 0x00800000;
+        if (uf > 0x7F800000) {
+            uf = 0x7F800000;
+        }
+    }
+
+    return s | uf;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -301,7 +321,25 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+    unsigned s = uf & 0x80000000;
+    int frac = (uf & 0x7FFFFF) | 0x800000;
+    int exp = (uf & 0x7F800000) >> 23;
+    int E = exp - 127;
+    unsigned V;
+
+    if (E >= 31) {
+        return 0x80000000;
+    }
+    if (E < 0) {
+        return 0;
+    }
+
+    if (E <= 23) {
+        V = frac >> (23 - E);
+    } else {
+        V = frac << (E - 23);
+    }
+    return s ? -V : V;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -317,5 +355,30 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+    /* Result exponent and fraction */
+    unsigned exp, frac;
+    unsigned u;
+
+    if (x < -149) {
+        /* Too small.  Return 0.0 */
+        exp = 0;
+        frac = 0;
+    } else if (x < -126) {
+        /* Denormalized result */
+        exp = 0;
+        frac = 1 << (149 + x);
+    } else if (x < 128) {
+        /* Normalized result. */
+        exp = 127 + x;
+        frac = 0;
+    } else {
+        /* Too big. Return +oo */
+        exp = 0xFF;
+        frac = 0;
+    }
+    
+    /* Pack exp and frac into 32 bits */
+    u = exp << 23 | frac;
+    /* Return as float */
+    return u;
 }

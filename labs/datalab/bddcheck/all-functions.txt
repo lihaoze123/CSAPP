@@ -23,11 +23,12 @@ ezThreeFourths  3     all
 fitsBits        2     :[1,32]
 fitsShort       1     all
 float_abs       2     all
-float_f2i       4     all
+floatFloat2Int  4     all
 float_half      4     all
 float_i2f       4     all
 float_neg       2     all
-float_twice     4     all
+floatPower2     4     all
+floatScale2     4     all
 getByte         2     :u2
 greatestBitPos  4     all
 howManyBits     4     all
