@@ -28,10 +28,6 @@ dlc:
 dlc-e:
     {{DOCKER_RUN}} ./dlc -e bits.c
 
-# 运行完整测试套件
-test:
-    {{DOCKER_RUN}} ./btest
-
 # 编译并运行测试 (-f 指定函数，-g 详细总结)
 btest *args:
     {{DOCKER_RUN}} make btest
@@ -42,7 +38,7 @@ bddcheck *args:
     {{DOCKER_RUN}} ./bddcheck/check.pl {{args}}
 
 # 完整检查 (dlc + bddcheck + btest)
-check: dlc bddcheck test
+check *args: dlc (btest args) (bddcheck args) 
 
 # 运行自动评分脚本 (最终评分)
 driver:
