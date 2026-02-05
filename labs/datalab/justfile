@@ -2,6 +2,7 @@
 
 DOCKER_IMAGE := "csapp-datalab"
 PWD := justfile_directory()
+DOCKER_RUN := "docker run --rm -v " + PWD + ":/datalab " + DOCKER_IMAGE
 
 # 列出所有可用命令
 default:
@@ -11,45 +12,52 @@ default:
 build:
     docker build -t {{DOCKER_IMAGE}} .
 
-# 编译并运行完整测试套件
-btest:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make btest
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./btest
-
-# 测试单个函数
-test function:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./btest -f {{function}}
-
-# 检查代码规则 (禁止 if/while/-/&&/|| 等)
-dlc:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./dlc bits.c
-
-# 显示每个函数的运算符使用数量
-dlc-e:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./dlc -e bits.c
-
 # 进入容器交互式 shell
 shell:
     docker run -it --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} /bin/bash
 
+# 运行任意命令
+run +cmd:
+    {{DOCKER_RUN}} {{cmd}}
+
+# 检查代码规则 (禁止 if/while/-/&&/|| 等)
+dlc:
+    {{DOCKER_RUN}} ./dlc bits.c
+
+# 显示每个函数的运算符使用数量
+dlc-e:
+    {{DOCKER_RUN}} ./dlc -e bits.c
+
+# 运行完整测试套件
+test:
+    {{DOCKER_RUN}} ./btest
+
+# 编译并运行测试 (-f 指定函数，-g 详细总结)
+btest *args:
+    {{DOCKER_RUN}} make btest
+    {{DOCKER_RUN}} ./btest {{args}}
+
+# 运行 bddcheck 检查 (-f 指定函数，-g 详细总结)
+bddcheck *args:
+    {{DOCKER_RUN}} ./bddcheck/check.pl {{args}}
+
+# 完整检查 (dlc + bddcheck + btest)
+check: dlc bddcheck test
+
 # 运行自动评分脚本 (最终评分)
 driver:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./driver.pl
+    {{DOCKER_RUN}} ./driver.pl
 
 # 清理编译生成的文件
 clean:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make clean
-
-# 运行任意命令
-run +cmd:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} {{cmd}}
+    {{DOCKER_RUN}} make clean
 
 # 显示浮点数的 IEEE 754 表示
 fshow value:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make fshow
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./fshow {{value}}
+    {{DOCKER_RUN}} make fshow
+    {{DOCKER_RUN}} ./fshow {{value}}
 
 # 显示整数的位表示
 ishow value:
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make ishow
-    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./ishow {{value}}
+    {{DOCKER_RUN}} make ishow
+    {{DOCKER_RUN}} ./ishow {{value}}
