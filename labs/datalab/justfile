@@ -1,27 +1,55 @@
+# CSAPP Data Lab - Docker 开发环境配置
+
 DOCKER_IMAGE := "csapp-datalab"
 PWD := justfile_directory()
 
+# 列出所有可用命令
 default:
     @just --list
 
+# 构建 Docker 镜像
 build:
     docker build -t {{DOCKER_IMAGE}} .
 
-btest: build
+# 编译并运行完整测试套件
+btest:
     docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make btest
     docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./btest
 
-dlc: build
+# 测试单个函数
+test function:
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./btest -f {{function}}
+
+# 检查代码规则 (禁止 if/while/-/&&/|| 等)
+dlc:
     docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./dlc bits.c
 
-dlc-e: build
+# 显示每个函数的运算符使用数量
+dlc-e:
     docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./dlc -e bits.c
 
-shell: build
+# 进入容器交互式 shell
+shell:
     docker run -it --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} /bin/bash
 
-driver: build
+# 运行自动评分脚本 (最终评分)
+driver:
     docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./driver.pl
 
+# 清理编译生成的文件
 clean:
     docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make clean
+
+# 运行任意命令
+run +cmd:
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} {{cmd}}
+
+# 显示浮点数的 IEEE 754 表示
+fshow value:
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make fshow
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./fshow {{value}}
+
+# 显示整数的位表示
+ishow value:
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make ishow
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./ishow {{value}}
