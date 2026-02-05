@@ -1,0 +1,27 @@
+DOCKER_IMAGE := "csapp-datalab"
+PWD := justfile_directory()
+
+default:
+    @just --list
+
+build:
+    docker build -t {{DOCKER_IMAGE}} .
+
+btest: build
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make btest
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./btest
+
+dlc: build
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./dlc bits.c
+
+dlc-e: build
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./dlc -e bits.c
+
+shell: build
+    docker run -it --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} /bin/bash
+
+driver: build
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} ./driver.pl
+
+clean:
+    docker run --rm -v {{PWD}}:/datalab {{DOCKER_IMAGE}} make clean
